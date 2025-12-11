@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Iluminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -22,6 +23,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role_id',
     ];
 
     /**
@@ -45,8 +47,25 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    // checar rol simple
+    public function hasRole(string $roleName): bool
+    {
+        return isset($this->role) && Str::lower($this->role->name) === Str::lower($roleName);
+    }
+
+    // checar permiso vía rol
+    public function hasPermission(string $permissionName): bool
+    {
+        if (!$this->role) return false;
+        return $this->role->permissions->contains(fn($p) => Str::lower($p->name) === Str::lower($permissionName));
+    }
+}
 }
